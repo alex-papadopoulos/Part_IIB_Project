@@ -9,6 +9,9 @@ from sklearn.model_selection import train_test_split
 from keras import backend as K
 from keras.callbacks import TensorBoard
 from keras.backend import tf as ktf
+import pickle
+import numpy as np
+import pandas as pd
 
 
 # Parameters
@@ -18,6 +21,9 @@ act = 'relu'
 '''
 3D_field: time, nx =256, ny=128, nz=160, components=3
 '''
+
+# Define empty 2D dataset
+uvw2D_sec = np.empty([50,256,128,15])
 
 # Ex. 5 cross-sections are used to input of the model
 uvw2D_sec[:,:,:,0:3]=uvw3D_field[:,:,:,15,:]
