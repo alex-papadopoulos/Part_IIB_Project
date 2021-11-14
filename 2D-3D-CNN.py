@@ -22,6 +22,20 @@ act = 'relu'
 3D_field: time, nx =256, ny=128, nz=160, components=3
 '''
 
+# TODO change this to the abs path of data: /home/../rds/...
+filename = ["/Users/Alex/Desktop/MEng Resources/2D_3D_DNS_Data/snapshots1.pkl",
+            "/Users/Alex/Desktop/MEng Resources/2D_3D_DNS_Data/snapshots2.pkl"]
+
+with open(filename[0], 'rb') as f:
+    obj = pickle.load(f)
+    uvw3D_field = obj
+
+with open(filename[1], 'rb') as f:
+    obj = pickle.load(f)
+    uvw3D_field = np.concatenate((uvw3D_field, obj), axis=0)
+
+print(uvw3D_field.shape)
+
 # Define empty 2D dataset
 uvw2D_sec = np.empty([50,256,128,15])
 
@@ -57,6 +71,7 @@ model = Model(input_field,x_final)
 model.compile(optimizer='adam',loss='mse')
 
 ##################
+# TODO change filepaths
 
 from keras.callbacks import ModelCheckpoint,EarlyStopping
 model_cb=ModelCheckpoint('./Model_cy.hdf5', monitor='val_loss',save_best_only=True,verbose=1)
