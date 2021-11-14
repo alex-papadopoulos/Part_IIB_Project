@@ -55,3 +55,16 @@ x_final = Conv3D(3,(3,3,3),activation='linear', padding='same')(x)
 # -------- #
 model = Model(input_field,x_final)
 model.compile(optimizer='adam',loss='mse')
+
+##################
+
+from keras.callbacks import ModelCheckpoint,EarlyStopping
+model_cb=ModelCheckpoint('./Model_cy.hdf5', monitor='val_loss',save_best_only=True,verbose=1)
+early_cb=EarlyStopping(monitor='val_loss', patience=100,verbose=1)
+cb = [model_cb, early_cb]
+history = model.fit(X_train,y_train,epochs=5000,batch_size=100,verbose=1,callbacks=cb,shuffle=True,validation_data=[X_test, y_test])
+df_results = pd.DataFrame(history.history)
+df_results['epoch'] = history.epoch
+df_results.to_csv(path_or_buf='./Model_cy.csv',index=False)
+
+model.save("./my_model")
