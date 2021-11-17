@@ -27,9 +27,8 @@ act = 'relu'
 3D_field: time, nx =256, ny=128, nz=160, components=3
 '''
 
-# TODO change this to the abs path of data: /home/../rds/...
-filename = ["/Users/Alex/Desktop/MEng Resources/2D_3D_DNS_Data/snapshots1.pkl",
-            "/Users/Alex/Desktop/MEng Resources/2D_3D_DNS_Data/snapshots2.pkl"]
+filename = ["/home/ap2021/rds/hpc-work/snapshots1.pkl",
+            "/home/ap2021/rds/hpc-work/snapshots2.pkl"]
 
 with open(filename[0], 'rb') as f:
     obj = pickle.load(f)
@@ -93,16 +92,16 @@ print(datetime.now(), "NN Model compiled")
 # TODO change filepaths
 
 from keras.callbacks import ModelCheckpoint,EarlyStopping
-model_cb = ModelCheckpoint('./Model_cy.hdf5', monitor='val_loss', save_best_only=True, verbose=1)
+model_cb = ModelCheckpoint('/home/ap2021/rds/hpc-work/Test_Model_Checkpoint.hdf5', monitor='val_loss', save_best_only=True, verbose=1)
 early_cb = EarlyStopping(monitor='val_loss', patience=100,verbose=1)
 cb = [model_cb, early_cb]
 # Use reduced epochs for first run - original is 5000
 history = model.fit(X_train,y_train,epochs=500,batch_size=50,verbose=1,callbacks=cb,shuffle=True,validation_data=[X_test, y_test])
 df_results = pd.DataFrame(history.history)
 df_results['epoch'] = history.epoch
-df_results.to_csv(path_or_buf='./Model_cy.csv',index=False)
+df_results.to_csv(path_or_buf='/home/ap2021/rds/hpc-work/Test_Model_Results.csv',index=False)
 
-model.save("./my_model")
+model.save("/home/ap2021/rds/hpc-work/Test_Model")
 
 # Flag for model.save
 print(datetime.now(), "Successfully saved trained model")
