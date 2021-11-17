@@ -44,6 +44,19 @@ with open(filename[1], 'rb') as f:
 # Flag for second file
 print(datetime.now(), "Loaded data from second file")
 
+# ### for input of turbulent data from JHTDB (h5py format)
+# filename = 'downloads/channel (1).h5'
+# f = h5py.File(filename, 'r')
+# keys = list(f.keys())
+# array = np.ndarray(shape=(len(keys) - 3,160,128,256,3))
+# ###print(datetime.now(), keys)
+# i = 0 
+# for x in keys[:-3:]:
+  # dset_temp = f[x]
+  # array[i,:,:,:,:] = dset_temp
+  # i += 1 
+# uvw3D_field = np.swapaxes(array, 1, 3)
+
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D DatasetL", uvw3D_field.shape)
 
