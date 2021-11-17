@@ -3,6 +3,8 @@
 '''
 
 # To run this code, a listed modules are required
+from datetime import datetime
+
 from keras.layers import Input,Conv2D, Conv3D, MaxPooling2D, UpSampling3D, Reshape
 from keras.models import Model
 from sklearn.model_selection import train_test_split
@@ -14,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 # Flag for module import
-print("Successfully imported modules")
+print(datetime.now(), "Successfully imported modules")
 
 
 # Parameters
@@ -34,17 +36,17 @@ with open(filename[0], 'rb') as f:
     uvw3D_field = obj
 
 # Flag for first file
-print("Loaded data from first file")
+print(datetime.now(), "Loaded data from first file")
 
 with open(filename[1], 'rb') as f:
     obj = pickle.load(f)
     uvw3D_field = np.concatenate((uvw3D_field, obj), axis=0)
 
 # Flag for second file
-print("Loaded data from second file")
+print(datetime.now(), "Loaded data from second file")
 
 # Flag for dataset shape
-print(uvw3D_field.shape)
+print(datetime.now(), "Shape of 3D DatasetL", uvw3D_field.shape)
 
 # Define empty 2D dataset
 uvw2D_sec = np.empty([100,256,128,15])
@@ -56,10 +58,12 @@ uvw2D_sec[:,:,:,6:9]=uvw3D_field[:,:,:,79,:]
 uvw2D_sec[:,:,:,9:12]=uvw3D_field[:,:,:,111,:]
 uvw2D_sec[:,:,:,12:]=uvw3D_field[:,:,:,143,:]
 
+print(datetime.now(), "Shape of 2D dataset", uvw2D_sec.shape)
+
 # The data is divide to training/validation data
 X_train,X_test,y_train,y_test = train_test_split(uvw2D_sec,uvw3D_field,test_size=0.3,random_state=None)
 
-print(X_train.shape)
+print(datetime.now(), "Shape of training dataset", X_train.shape)
 
 
 # Input variables
@@ -83,7 +87,7 @@ model = Model(input_field,x_final)
 model.compile(optimizer='adam',loss='mse')
 
 # Flag for compiling model
-print("NN Model compiled")
+print(datetime.now(), "NN Model compiled")
 
 ##################
 # TODO change filepaths
@@ -101,4 +105,4 @@ df_results.to_csv(path_or_buf='./Model_cy.csv',index=False)
 model.save("./my_model")
 
 # Flag for model.save
-print("Successfully saved trained model")
+print(datetime.now(), "Successfully saved trained model")
