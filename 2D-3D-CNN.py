@@ -5,12 +5,14 @@
 # To run this code, a listed modules are required
 from datetime import datetime
 
-from keras.layers import Input,Conv2D, Conv3D, MaxPooling2D, UpSampling3D, Reshape
-from keras.models import Model
+import tensorflow as tf
+# from keras.layers import Input,Conv2D, Conv3D, MaxPooling2D, UpSampling3D, Reshape
+# from keras.models import Model
+# from keras.callbacks import ModelCheckpoint,EarlyStopping
 from sklearn.model_selection import train_test_split
-from keras import backend as K
-from keras.callbacks import TensorBoard
-from keras.backend import tf as ktf
+# from keras import backend as K
+# from keras.callbacks import TensorBoard
+# from keras.backend import tf as ktf
 import pickle
 import numpy as np
 import pandas as pd
@@ -79,34 +81,32 @@ print(datetime.now(), "Shape of training dataset", X_train.shape)
 
 
 # Input variables
-input_field = Input(shape=(256,128,15))
+input_field = tf.keras.layers.Input(shape=(256,128,15))
 
 # Network structure
-x = Conv2D(32, (3,3),activation=act, padding='same')(input_field)
-x = Conv2D(32, (3,3),activation=act, padding='same')(x)
-x = MaxPooling2D((2,2))(x)
-x = Conv2D(16, (3,3),activation=act, padding='same')(x)
-x = Conv2D(20, (3,3),activation=act, padding='same')(x)
-x = Reshape([128,64,20,1])(x)
-x = Conv3D(16, (3,3,3),activation=act, padding='same')(x)
-x = Conv3D(16, (3,3,3),activation=act, padding='same')(x)
-x = UpSampling3D((2,2,8))(x)
-x = Conv3D(32, (3,3,3),activation=act, padding='same')(x)
-x = Conv3D(32, (3,3,3),activation=act, padding='same')(x)
-x_final = Conv3D(3,(3,3,3),activation='linear', padding='same')(x)
+x = tf.keras.layers.Conv2D(32, (3,3),activation=act, padding='same')(input_field)
+x = tf.keras.layers.Conv2D(32, (3,3),activation=act, padding='same')(x)
+x = tf.keras.layers.MaxPooling2D((2,2))(x)
+x = tf.keras.layers.Conv2D(16, (3,3),activation=act, padding='same')(x)
+x = tf.keras.layers.Conv2D(20, (3,3),activation=act, padding='same')(x)
+x = tf.keras.layers.Reshape([128,64,20,1])(x)
+x = tf.keras.layers.Conv3D(16, (3,3,3),activation=act, padding='same')(x)
+x = tf.keras.layers.Conv3D(16, (3,3,3),activation=act, padding='same')(x)
+x = tf.keras.layers.UpSampling3D((2,2,8))(x)
+x = tf.keras.layers.Conv3D(32, (3,3,3),activation=act, padding='same')(x)
+x = tf.keras.layers.Conv3D(32, (3,3,3),activation=act, padding='same')(x)
+x_final = tf.keras.layers.Conv3D(3,(3,3,3),activation='linear', padding='same')(x)
 # -------- #
-model = Model(input_field,x_final)
+model = tf.keras.models.Model(input_field,x_final)
 model.compile(optimizer='adam',loss='mse')
 
 # Flag for compiling model
 print(datetime.now(), "NN Model compiled")
 
 ##################
-# TODO change filepaths
 
-from keras.callbacks import ModelCheckpoint,EarlyStopping
-model_cb = ModelCheckpoint('/home/ap2021/rds/hpc-work/Test_Model_Checkpoint.hdf5', monitor='val_loss', save_best_only=True, verbose=1)
-early_cb = EarlyStopping(monitor='val_loss', patience=100,verbose=1)
+model_cb = tf.keras.callbacks.ModelCheckpoint('/home/ap2021/rds/hpc-work/Test_Model_Checkpoint.hdf5', monitor='val_loss', save_best_only=True, verbose=1)
+early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100,verbose=1)
 cb = [model_cb, early_cb]
 # Use reduced epochs for first run - original is 5000
 history = model.fit(X_train,y_train,epochs=500,batch_size=50,verbose=1,callbacks=cb,shuffle=True,validation_data=[X_test, y_test])
