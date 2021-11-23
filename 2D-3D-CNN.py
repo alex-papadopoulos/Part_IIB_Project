@@ -22,42 +22,46 @@ print(datetime.now(), "Successfully imported modules")
 
 
 # Parameters
+filename = ["/home/ap2021/rds/hpc-work/snapshots1.pkl","/home/ap2021/rds/hpc-work/snapshots2.pkl"]
+#filename = ["app/snapshots1.pkl","app/snapshots2.pkl"]
+#filename = 'downloads/channel (1).h5'
+filetype = "pickle"  ###pickle or h5py
 act = 'relu'
+
 
 # Configurations of input/output variables are as follows:
 '''
 3D_field: time, nx =256, ny=128, nz=160, components=3
 '''
+if (filetype = "pickle"):
+  with open(filename[0], 'rb') as f:
+      obj = pickle.load(f)
+      uvw3D_field = obj
 
-filename = ["/home/ap2021/rds/hpc-work/snapshots1.pkl",
-            "/home/ap2021/rds/hpc-work/snapshots2.pkl"]
+  # Flag for first file
+  print(datetime.now(), "Loaded data from first pickle file")
 
-with open(filename[0], 'rb') as f:
-    obj = pickle.load(f)
-    uvw3D_field = obj
+  with open(filename[1], 'rb') as f:
+      obj = pickle.load(f)
+      uvw3D_field = np.concatenate((uvw3D_field, obj), axis=0)
 
-# Flag for first file
-print(datetime.now(), "Loaded data from first file")
+  # Flag for second file
+  print(datetime.now(), "Loaded data from second pickle file")
 
-with open(filename[1], 'rb') as f:
-    obj = pickle.load(f)
-    uvw3D_field = np.concatenate((uvw3D_field, obj), axis=0)
-
-# Flag for second file
-print(datetime.now(), "Loaded data from second file")
-
-# ### for input of turbulent data from JHTDB (h5py format)
-# filename = 'downloads/channel (1).h5'
-# f = h5py.File(filename, 'r')
-# keys = list(f.keys())
-# array = np.ndarray(shape=(len(keys) - 3,160,128,256,3))
-# ###print(datetime.now(), keys)
-# i = 0 
-# for x in keys[:-3:]:
-  # dset_temp = f[x]
-  # array[i,:,:,:,:] = dset_temp
-  # i += 1 
-# uvw3D_field = np.swapaxes(array, 1, 3)
+elif (filetype = "h5py"):
+  ### for input of turbulent data from JHTDB (h5py format)
+  f = h5py.File(filename, 'r')
+  keys = list(f.keys())
+  array = np.ndarray(shape=(len(keys) - 3,160,128,256,3))
+  i = 0 
+  for x in keys[:-3:]:
+    dset_temp = f[x]
+    array[i,:,:,:,:] = dset_temp
+    i += 1 
+  uvw3D_field = np.swapaxes(array, 1, 3)     
+  print(datetime.now(), "Loaded data from h5py file")
+else:
+  print(datetime.now(), "filetype???")
 
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D DatasetL", uvw3D_field.shape)
