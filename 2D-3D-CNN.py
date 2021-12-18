@@ -34,6 +34,7 @@ ny = 128
 nz = 160
 EPOCHS = 100
 BATCH_SIZE = 35
+VAL_SPLIT = 0.3
 
 #TODO: add a parameter to change number of 2D slices? currently 5
 
@@ -44,6 +45,7 @@ if Laptop:
     nz = 40
     EPOCHS = 1
     BATCH_SIZE = snapshots
+    VAL_SPLIT = 0.2
 
 # Configurations of input/output variables are as follows:
 '''
@@ -61,7 +63,7 @@ if Laptop:
 
 elif filetype == "pickle":
 
-    with open(filename[0], 'rb') as f:
+    with open(filename, 'rb') as f:
         obj = pickle.load(f)
         uvw3D_field = obj
     # Flag for first file
@@ -103,10 +105,6 @@ uvw2D_sec[:, :, :, 12:] = uvw3D_field[:, :, :, slice_pos[4], :]
 
 print(datetime.now(), "Shape of 2D dataset", uvw2D_sec.shape)
 
-# The data is divide to training/validation data
-# if not Laptop:
-# X_train,X_test,y_train,y_test = train_test_split(uvw2D_sec,uvw3D_field,test_size=0.3,random_state=None)  ###doesn't seam to work, using validation split instead.
-# print(datetime.now(), "Shape of training dataset", X_train.shape)
 
 # Input variables
 input_field = tf.keras.layers.Input(shape=(nx, ny, 15))
@@ -137,13 +135,9 @@ model_cb = tf.keras.callbacks.ModelCheckpoint('/home/ap2021/rds/hpc-work/Test_Mo
                                               monitor='val_loss', save_best_only=True, verbose=1)
 early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=1)
 cb = [model_cb, early_cb]
-# Use reduced epochs for first run - original is 5000
-if Laptop:
-    history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=cb,
-                        shuffle=True, validation_split=0.2)
-else:
-    history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=cb,
-                        shuffle=True, validation_split=0.3)
+# Use reduced epochs for first few runs - original is 5000
+history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=cb,
+                    shuffle=True, validation_split=VAL_SPLIT)
 df_results = pd.DataFrame(history.history)
 df_results['epoch'] = history.epoch
 df_results.to_csv(path_or_buf='/home/ap2021/rds/hpc-work/Test_Model_Results.csv', index=False)
