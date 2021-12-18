@@ -22,11 +22,11 @@ print(datetime.now(), "Successfully imported modules")
 
 # Parameters
 Laptop = False
-filename = ["/home/ap2021/rds/hpc-work/snapshots1.pkl", "/home/ap2021/rds/hpc-work/snapshots2.pkl"]
+filename = "/home/ap2021/rds/hpc-work/snapshots.pkl"
 # filename = ["app/snapshots1.pkl","app/snapshots2.pkl"]
 # filename = 'downloads/channel (1).h5'
-savelocation = ['']  ##not used
-filetype = "pickle"  ###pickle or h5py
+#savelocation = ['']  # not used
+filetype = "pickle"  # pickle or h5py
 act = 'relu'
 snapshots = 100
 nx = 256
@@ -35,7 +35,7 @@ nz = 160
 EPOCHS = 100
 BATCH_SIZE = 35
 
-###add a parameter to change number of 2D slices? currently 5
+#TODO: add a parameter to change number of 2D slices? currently 5
 
 if Laptop:
     snapshots = 5
@@ -51,7 +51,7 @@ if Laptop:
 '''
 if Laptop:
 
-    with open(filename[0], 'rb') as f:
+    with open(filename, 'rb') as f:
         obj = pickle.load(f)  # laptop currently only for pickle file
         uvw3D_field = obj[:snapshots, :nx, :ny, :nz, :]  # reduce size
         uvw3D_field = uvw3D_field.astype(np.float32)  # reduce accuracy
@@ -65,13 +65,7 @@ elif filetype == "pickle":
         obj = pickle.load(f)
         uvw3D_field = obj
     # Flag for first file
-    print(datetime.now(), "Loaded data from first pickle file")
-
-    with open(filename[1], 'rb') as f:
-        obj = pickle.load(f)
-        uvw3D_field = np.concatenate((uvw3D_field, obj), axis=0)
-    # Flag for second file
-    print(datetime.now(), "Loaded data from second pickle file")
+    print(datetime.now(), "Loaded data from pickle file")
 
 elif filetype == "h5py":
 
@@ -89,7 +83,7 @@ elif filetype == "h5py":
 
 else:
     uvw3D_field = np.zeros((1))
-    print(datetime.now(), "filetype???")
+    print(datetime.now(), "Unrecognised filetype")
 
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
