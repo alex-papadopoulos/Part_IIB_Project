@@ -144,7 +144,7 @@ df_results = pd.DataFrame(history.history)
 df_results['epoch'] = history.epoch
 df_results.to_csv(path_or_buf='/home/' + user + '/rds/hpc-work/Test_Model_Results.csv', index=False)
 
-model.save("/home/" + user + "ap2021/rds/hpc-work/Test_Model")
+model.save("/home/" + user + "/rds/hpc-work/Test_Model")
 
 # Flag for model.save
 print(datetime.now(), "Successfully saved trained model")
