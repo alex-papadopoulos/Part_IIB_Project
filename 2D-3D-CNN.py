@@ -22,7 +22,9 @@ print(datetime.now(), "Successfully imported modules")
 
 # Parameters
 Laptop = False
-filename = "/home/ap2021/rds/hpc-work/snapshots.pkl"
+user = "ap2021"
+# user = "rpe26"
+filename = "/home/" + user + "/rds/hpc-work/snapshots.pkl"
 # filename = ["app/snapshots1.pkl","app/snapshots2.pkl"]
 # filename = 'downloads/channel (1).h5'
 #savelocation = ['']  # not used
@@ -131,7 +133,7 @@ print(datetime.now(), "NN Model compiled")
 
 ##################
 
-model_cb = tf.keras.callbacks.ModelCheckpoint('/home/ap2021/rds/hpc-work/Test_Model_Checkpoint.hdf5',
+model_cb = tf.keras.callbacks.ModelCheckpoint('/home/' + user + '/rds/hpc-work/Test_Model_Checkpoint.hdf5',
                                               monitor='val_loss', save_best_only=True, verbose=1)
 early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=1)
 cb = [model_cb, early_cb]
@@ -140,9 +142,9 @@ history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE
                     shuffle=True, validation_split=VAL_SPLIT)
 df_results = pd.DataFrame(history.history)
 df_results['epoch'] = history.epoch
-df_results.to_csv(path_or_buf='/home/ap2021/rds/hpc-work/Test_Model_Results.csv', index=False)
+df_results.to_csv(path_or_buf='/home/' + user + '/rds/hpc-work/Test_Model_Results.csv', index=False)
 
-model.save("/home/ap2021/rds/hpc-work/Test_Model")
+model.save("/home/" + user + "ap2021/rds/hpc-work/Test_Model")
 
 # Flag for model.save
 print(datetime.now(), "Successfully saved trained model")
