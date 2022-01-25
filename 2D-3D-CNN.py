@@ -22,21 +22,20 @@ print(datetime.now(), "Successfully imported modules")
 
 # Parameters
 Laptop = False
+train_test_split = True
 user = "ap2021"
 # user = "rpe26"
 filename = "/home/" + user + "/rds/hpc-work/snapshots.pkl"
 # filename = ["app/snapshots1.pkl","app/snapshots2.pkl"]
 # filename = 'downloads/channel (1).h5'
-#savelocation = ['']  # not used
-filetype = "pickle"  # pickle or h5py
 act = 'relu'
 snapshots = 100
 nx = 256
 ny = 128
 nz = 160
-EPOCHS = 100
-BATCH_SIZE = 35
-VAL_SPLIT = 0.3
+EPOCHS = 1
+BATCH_SIZE = 10
+VAL_SPLIT = 0.2
 
 #TODO: add a parameter to change number of 2D slices? currently 5
 
@@ -63,7 +62,7 @@ if Laptop:
     # Flag for first file
     print(datetime.now(), "Loaded data from pickle file for laptop")
 
-elif filetype == "pickle":
+else:
 
     with open(filename, 'rb') as f:
         obj = pickle.load(f)
@@ -71,23 +70,6 @@ elif filetype == "pickle":
     # Flag for first file
     print(datetime.now(), "Loaded data from pickle file")
 
-elif filetype == "h5py":
-
-    ### for input of turbulent data from JHTDB (h5py format)
-    f = h5py.File(filename, 'r')
-    keys = list(f.keys())
-    array = np.ndarray(shape=(len(keys) - 3, 160, 128, 256, 3))
-    i = 0
-    for x in keys[:-3:]:
-        dset_temp = f[x]
-        array[i, :, :, :, :] = dset_temp
-        i += 1
-    uvw3D_field = np.swapaxes(array, 1, 3)
-    print(datetime.now(), "Loaded data from h5py file")
-
-else:
-    uvw3D_field = np.zeros((1))
-    print(datetime.now(), "Unrecognised filetype")
 
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
@@ -106,6 +88,13 @@ uvw2D_sec[:, :, :, 9:12] = uvw3D_field[:, :, :, slice_pos[3], :]
 uvw2D_sec[:, :, :, 12:] = uvw3D_field[:, :, :, slice_pos[4], :]
 
 print(datetime.now(), "Shape of 2D dataset", uvw2D_sec.shape)
+
+### train_test_split
+if train_test_split:
+    from sklearn.model_selection import train_test_split
+    print(datetime.now(), "Imported train_test_split")
+    uvw2D_sec, uvw2D_sec_val, uvw3D_field, uvw3D_field_val = train_test_split(uvw2D_sec, uvw3D_field, test_size=VAL_SPLIT, shuffle=True)
+    print(datetime.now(), "Data split", VAL_SPLIT)
 
 
 # Input variables
@@ -135,11 +124,13 @@ print(datetime.now(), "NN Model compiled")
 
 model_cb = tf.keras.callbacks.ModelCheckpoint('/home/' + user + '/rds/hpc-work/Test_Model_Checkpoint.hdf5',
                                               monitor='val_loss', save_best_only=True, verbose=1)
-early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, verbose=1)
+early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, verbose=1)
 cb = [model_cb, early_cb]
 # Use reduced epochs for first few runs - original is 5000
-history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=cb,
-                    shuffle=True, validation_split=VAL_SPLIT)
+if train_test_split:
+    history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=cb, shuffle=True, validation_data=(uvw2D_sec_val,uvw3D_field_val))
+else:
+    history = model.fit(uvw2D_sec, uvw3D_field, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=1, callbacks=cb, shuffle=True, validation_split=VAL_SPLIT)
 df_results = pd.DataFrame(history.history)
 df_results['epoch'] = history.epoch
 df_results.to_csv(path_or_buf='/home/' + user + '/rds/hpc-work/Test_Model_Results.csv', index=False)
