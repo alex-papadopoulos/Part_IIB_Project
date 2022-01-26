@@ -47,7 +47,11 @@ if Laptop:
     EPOCHS = 1
     BATCH_SIZE = snapshots
     VAL_SPLIT = 0.2
-
+    
+# Create a MirroredStrategy.
+strategy = tf.distribute.MirroredStrategy()
+print('Number of devices: {}'.format(strategy.num_replicas_in_sync))  
+    
 # Configurations of input/output variables are as follows:
 '''
 3D_field: time, nx =256, ny=128, nz=160, components=3
@@ -96,26 +100,26 @@ if train_test_split:
     uvw2D_sec, uvw2D_sec_val, uvw3D_field, uvw3D_field_val = train_test_split(uvw2D_sec, uvw3D_field, test_size=VAL_SPLIT, shuffle=True)
     print(datetime.now(), "Data split", VAL_SPLIT)
 
+with strategy.scope():
+    # Input variables
+    input_field = tf.keras.layers.Input(shape=(nx, ny, 15))
 
-# Input variables
-input_field = tf.keras.layers.Input(shape=(nx, ny, 15))
-
-# Network structure
-x = tf.keras.layers.Conv2D(32, (3, 3), activation=act, padding='same')(input_field)
-x = tf.keras.layers.Conv2D(32, (3, 3), activation=act, padding='same')(x)
-x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-x = tf.keras.layers.Conv2D(16, (3, 3), activation=act, padding='same')(x)
-x = tf.keras.layers.Conv2D(int(nz / 8), (3, 3), activation=act, padding='same')(x)
-x = tf.keras.layers.Reshape([int(nx / 2), int(ny / 2), int(nz / 8), 1])(x)
-x = tf.keras.layers.Conv3D(16, (3, 3, 3), activation=act, padding='same')(x)
-x = tf.keras.layers.Conv3D(16, (3, 3, 3), activation=act, padding='same')(x)
-x = tf.keras.layers.UpSampling3D((2, 2, 8))(x)
-x = tf.keras.layers.Conv3D(32, (3, 3, 3), activation=act, padding='same')(x)
-x = tf.keras.layers.Conv3D(32, (3, 3, 3), activation=act, padding='same')(x)
-x_final = tf.keras.layers.Conv3D(3, (3, 3, 3), activation='linear', padding='same')(x)
-# -------- #
-model = tf.keras.models.Model(input_field, x_final)
-model.compile(optimizer='adam', loss='mse')
+    # Network structure
+    x = tf.keras.layers.Conv2D(32, (3, 3), activation=act, padding='same')(input_field)
+    x = tf.keras.layers.Conv2D(32, (3, 3), activation=act, padding='same')(x)
+    x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+    x = tf.keras.layers.Conv2D(16, (3, 3), activation=act, padding='same')(x)
+    x = tf.keras.layers.Conv2D(int(nz / 8), (3, 3), activation=act, padding='same')(x)
+    x = tf.keras.layers.Reshape([int(nx / 2), int(ny / 2), int(nz / 8), 1])(x)
+    x = tf.keras.layers.Conv3D(16, (3, 3, 3), activation=act, padding='same')(x)
+    x = tf.keras.layers.Conv3D(16, (3, 3, 3), activation=act, padding='same')(x)
+    x = tf.keras.layers.UpSampling3D((2, 2, 8))(x)
+    x = tf.keras.layers.Conv3D(32, (3, 3, 3), activation=act, padding='same')(x)
+    x = tf.keras.layers.Conv3D(32, (3, 3, 3), activation=act, padding='same')(x)
+    x_final = tf.keras.layers.Conv3D(3, (3, 3, 3), activation='linear', padding='same')(x)
+    # -------- #
+    model = tf.keras.models.Model(input_field, x_final)
+    model.compile(optimizer='adam', loss='mse')
 
 # Flag for compiling model
 print(datetime.now(), "NN Model compiled")
