@@ -28,14 +28,17 @@ user = "ap2021"
 filename = "/home/" + user + "/rds/hpc-work/snapshots.pkl"
 # filename = ["app/snapshots1.pkl","app/snapshots2.pkl"]
 # filename = 'downloads/channel (1).h5'
+# filename = "/Users/Alex/Desktop/MEng_Resources/2D_3D_DNS_Data/snapshots.pkl"
 act = 'relu'
 snapshots = 100
 nx = 256
 ny = 128
 nz = 160
 EPOCHS = 1
-BATCH_SIZE = 10
+BATCH_SIZE = 12
 VAL_SPLIT = 0.2
+time_handling = True
+dt = 2 # time delay between slices expressed as number of snapshots
 
 #TODO: add a parameter to change number of 2D slices? currently 5
 
@@ -78,18 +81,31 @@ else:
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
 
-# Define empty 2D dataset
-uvw2D_sec = np.empty([snapshots, nx, ny, 15])
-
 slice_pos = np.array([(nz - 1) * 0.1, (nz - 1) * 0.3, (nz - 1) * 0.5, (nz - 1) * 0.7, (nz - 1) * 0.9])
 slice_pos = slice_pos.astype(int)
 
 # Ex. 5 cross-sections are used to input of the model
-uvw2D_sec[:, :, :, 0:3] = uvw3D_field[:, :, :, slice_pos[0], :]
-uvw2D_sec[:, :, :, 3:6] = uvw3D_field[:, :, :, slice_pos[1], :]
-uvw2D_sec[:, :, :, 6:9] = uvw3D_field[:, :, :, slice_pos[2], :]
-uvw2D_sec[:, :, :, 9:12] = uvw3D_field[:, :, :, slice_pos[3], :]
-uvw2D_sec[:, :, :, 12:] = uvw3D_field[:, :, :, slice_pos[4], :]
+if not time_handling:
+    # Define empty 2D dataset
+    uvw2D_sec = np.empty([snapshots, nx, ny, 15])
+
+    uvw2D_sec[:, :, :, 0:3] = uvw3D_field[:, :, :, slice_pos[0], :]
+    uvw2D_sec[:, :, :, 3:6] = uvw3D_field[:, :, :, slice_pos[1], :]
+    uvw2D_sec[:, :, :, 6:9] = uvw3D_field[:, :, :, slice_pos[2], :]
+    uvw2D_sec[:, :, :, 9:12] = uvw3D_field[:, :, :, slice_pos[3], :]
+    uvw2D_sec[:, :, :, 12:] = uvw3D_field[:, :, :, slice_pos[4], :]
+else:
+    # Define empty 2D dataset
+    uvw2D_sec = np.empty([snapshots-2*dt, nx, ny, 15])
+
+    for i in range(2*dt, snapshots-2*dt):
+        uvw2D_sec[i - 2*dt, :, :, 0:3] = uvw3D_field[i-2*dt, :, :, slice_pos[0], :]
+        uvw2D_sec[i - 2*dt, :, :, 3:6] = uvw3D_field[i-dt, :, :, slice_pos[1], :]
+        uvw2D_sec[i - 2*dt, :, :, 6:9] = uvw3D_field[i, :, :, slice_pos[2], :]
+        uvw2D_sec[i - 2*dt, :, :, 9:12] = uvw3D_field[i+dt, :, :, slice_pos[3], :]
+        uvw2D_sec[i - 2*dt, :, :, 12:] = uvw3D_field[i+2*dt, :, :, slice_pos[4], :]
+
+    uvw3D_field = uvw3D_field[dt:snapshots-dt,:,:,:,:]
 
 print(datetime.now(), "Shape of 2D dataset", uvw2D_sec.shape)
 
