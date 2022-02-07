@@ -78,9 +78,6 @@ else:
     print(datetime.now(), "Loaded data from pickle file")
 
 
-# Flag for dataset shape
-print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
-
 slice_pos = np.array([(nz - 1) * 0.1, (nz - 1) * 0.3, (nz - 1) * 0.5, (nz - 1) * 0.7, (nz - 1) * 0.9])
 slice_pos = slice_pos.astype(int)
 
@@ -96,7 +93,7 @@ if not time_handling:
     uvw2D_sec[:, :, :, 12:] = uvw3D_field[:, :, :, slice_pos[4], :]
 else:
     # Define empty 2D dataset
-    uvw2D_sec = np.empty([snapshots-2*dt, nx, ny, 15])
+    uvw2D_sec = np.empty([snapshots-4*dt, nx, ny, 15])
 
     for i in range(2*dt, snapshots-2*dt):
         uvw2D_sec[i - 2*dt, :, :, 0:3] = uvw3D_field[i-2*dt, :, :, slice_pos[0], :]
@@ -105,7 +102,10 @@ else:
         uvw2D_sec[i - 2*dt, :, :, 9:12] = uvw3D_field[i+dt, :, :, slice_pos[3], :]
         uvw2D_sec[i - 2*dt, :, :, 12:] = uvw3D_field[i+2*dt, :, :, slice_pos[4], :]
 
-    uvw3D_field = uvw3D_field[dt:snapshots-dt,:,:,:,:]
+    uvw3D_field = uvw3D_field[2*dt:snapshots-2*dt,:,:,:,:]
+
+# Flag for dataset shape
+print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
 
 print(datetime.now(), "Shape of 2D dataset", uvw2D_sec.shape)
 
