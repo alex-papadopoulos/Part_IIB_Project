@@ -134,7 +134,7 @@ if train_test_split:
 
 with strategy.scope():
     # Input variables
-    input_field = tf.keras.layers.Input(shape=(nx, ny, 15))
+    input_field = tf.keras.layers.Input(shape=(nx, ny, 3*n_slices))
 
     # Network structure
     x = tf.keras.layers.Conv2D(32, (3, 3), activation=act, padding='same')(input_field)
