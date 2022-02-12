@@ -6,13 +6,6 @@
 from datetime import datetime
 
 import tensorflow as tf
-# from keras.layers import Input,Conv2D, Conv3D, MaxPooling2D, UpSampling3D, Reshape
-# from keras.models import Model
-# from keras.callbacks import ModelCheckpoint,EarlyStopping
-# from keras import backend as K
-# from keras.callbacks import TensorBoard
-# from keras.backend import tf as ktf
-import h5py
 import pickle
 import numpy as np
 import pandas as pd
@@ -25,22 +18,21 @@ Laptop = False
 train_test_split = True
 user = "ap2021"
 # user = "rpe26"
-filename = "/home/" + user + "/rds/hpc-work/snapshots.pkl"
+#filename = "/home/" + user + "/rds/hpc-work/snapshots.pkl"
 # filename = ["app/snapshots1.pkl","app/snapshots2.pkl"]
 # filename = 'downloads/channel (1).h5'
-# filename = "/Users/Alex/Desktop/MEng_Resources/2D_3D_DNS_Data/snapshots.pkl"
+filename = "/Users/Alex/Desktop/MEng_Resources/2D_3D_DNS_Data/snapshots.pkl"
 act = 'relu'
 snapshots = 100
 nx = 256
 ny = 128
 nz = 160
-EPOCHS = 1
+EPOCHS = 2000
 BATCH_SIZE = 12
-VAL_SPLIT = 0.2
+VAL_SPLIT = 0.3
 time_handling = True
-dt = 2 # time delay between slices expressed as number of snapshots
-
-#TODO: add a parameter to change number of 2D slices? currently 5
+dt = 2  # time delay between slices expressed as number of snapshots
+n_slices = 5  # Only supports 3, 5 and 7
 
 if Laptop:
     snapshots = 5
@@ -77,32 +69,56 @@ else:
     # Flag for first file
     print(datetime.now(), "Loaded data from pickle file")
 
-
-slice_pos = np.array([(nz - 1) * 0.1, (nz - 1) * 0.3, (nz - 1) * 0.5, (nz - 1) * 0.7, (nz - 1) * 0.9])
+slice_pos = np.zeros(n_slices)
+slice_distance = 0.8/ (n_slices - 1)
+for i in range(n_slices):
+    slice_pos[i] = (nz - 1) * (0.5 + slice_distance * (i - (n_slices - 1) / 2))
 slice_pos = slice_pos.astype(int)
 
 # Ex. 5 cross-sections are used to input of the model
 if not time_handling:
     # Define empty 2D dataset
-    uvw2D_sec = np.empty([snapshots, nx, ny, 15])
+    uvw2D_sec = np.empty([snapshots, nx, ny, n_slices * 3])
 
-    uvw2D_sec[:, :, :, 0:3] = uvw3D_field[:, :, :, slice_pos[0], :]
-    uvw2D_sec[:, :, :, 3:6] = uvw3D_field[:, :, :, slice_pos[1], :]
-    uvw2D_sec[:, :, :, 6:9] = uvw3D_field[:, :, :, slice_pos[2], :]
-    uvw2D_sec[:, :, :, 9:12] = uvw3D_field[:, :, :, slice_pos[3], :]
-    uvw2D_sec[:, :, :, 12:] = uvw3D_field[:, :, :, slice_pos[4], :]
+    for i in range(n_slices):
+        uvw2D_sec[:, :, :, 3*i: 3*(i+1)] = uvw3D_field[:, :, :, slice_pos[i], :]
 else:
-    # Define empty 2D dataset
-    uvw2D_sec = np.empty([snapshots-4*dt, nx, ny, 15])
 
-    for i in range(2*dt, snapshots-2*dt):
-        uvw2D_sec[i - 2*dt, :, :, 0:3] = uvw3D_field[i-2*dt, :, :, slice_pos[0], :]
-        uvw2D_sec[i - 2*dt, :, :, 3:6] = uvw3D_field[i-dt, :, :, slice_pos[1], :]
-        uvw2D_sec[i - 2*dt, :, :, 6:9] = uvw3D_field[i, :, :, slice_pos[2], :]
-        uvw2D_sec[i - 2*dt, :, :, 9:12] = uvw3D_field[i+dt, :, :, slice_pos[3], :]
-        uvw2D_sec[i - 2*dt, :, :, 12:] = uvw3D_field[i+2*dt, :, :, slice_pos[4], :]
+    if n_slices == 3:
+        # Define empty 2D dataset
+        uvw2D_sec = np.empty([snapshots-2*dt, nx, ny, n_slices * 3])
+        for i in range(dt, snapshots-dt):
+            uvw2D_sec[i - dt, :, :, 0:3] = uvw3D_field[i-dt, :, :, slice_pos[0], :]
+            uvw2D_sec[i - dt, :, :, 3:6] = uvw3D_field[i, :, :, slice_pos[1], :]
+            uvw2D_sec[i - dt, :, :, 6:9] = uvw3D_field[i + dt, :, :, slice_pos[2], :]
 
-    uvw3D_field = uvw3D_field[2*dt:snapshots-2*dt,:,:,:,:]
+        uvw3D_field = uvw3D_field[dt:snapshots-dt,:,:,:,:]
+    elif n_slices == 5:
+        # Define empty 2D dataset
+        uvw2D_sec = np.empty([snapshots-4*dt, nx, ny, n_slices * 3])
+        for i in range(2*dt, snapshots-2*dt):
+            uvw2D_sec[i - 2*dt, :, :, 0:3] = uvw3D_field[i-2*dt, :, :, slice_pos[0], :]
+            uvw2D_sec[i - 2*dt, :, :, 3:6] = uvw3D_field[i-dt, :, :, slice_pos[1], :]
+            uvw2D_sec[i - 2*dt, :, :, 6:9] = uvw3D_field[i, :, :, slice_pos[2], :]
+            uvw2D_sec[i - 2*dt, :, :, 9:12] = uvw3D_field[i+dt, :, :, slice_pos[3], :]
+            uvw2D_sec[i - 2*dt, :, :, 12:] = uvw3D_field[i+2*dt, :, :, slice_pos[4], :]
+
+        uvw3D_field = uvw3D_field[2*dt:snapshots-2*dt,:,:,:,:]
+    elif n_slices == 7:
+        # Define empty 2D dataset
+        uvw2D_sec = np.empty([snapshots-6*dt, nx, ny, n_slices * 3])
+        for i in range(3*dt, snapshots-3*dt):
+            uvw2D_sec[i - 3*dt, :, :, 0:3] = uvw3D_field[i-3*dt, :, :, slice_pos[0], :]
+            uvw2D_sec[i - 3*dt, :, :, 3:6] = uvw3D_field[i-2*dt, :, :, slice_pos[1], :]
+            uvw2D_sec[i - 3*dt, :, :, 6:9] = uvw3D_field[i-dt, :, :, slice_pos[2], :]
+            uvw2D_sec[i - 3*dt, :, :, 9:12] = uvw3D_field[i, :, :, slice_pos[3], :]
+            uvw2D_sec[i - 3*dt, :, :, 12:15] = uvw3D_field[i+dt, :, :, slice_pos[4], :]
+            uvw2D_sec[i - 3*dt, :, :, 15:18] = uvw3D_field[i+2*dt, :, :, slice_pos[5], :]
+            uvw2D_sec[i - 3*dt, :, :, 18:] = uvw3D_field[i+3*dt, :, :, slice_pos[6], :]
+
+        uvw3D_field = uvw3D_field[3*dt:snapshots-3*dt,:,:,:,:]
+
+
 
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
