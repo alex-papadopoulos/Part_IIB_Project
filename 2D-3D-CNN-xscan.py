@@ -98,6 +98,8 @@ else:
 
     uvw3D_field = uvw3D_field[2*dt:snapshots-2*dt,:,:,:,:]
 
+uvw3D_field = np.transpose(uvw3D_field, (0,2,3,1,4))
+
 # Flag for dataset shape
 print(datetime.now(), "Shape of 3D Dataset", uvw3D_field.shape)
 
@@ -153,4 +155,4 @@ model.save("/home/" + user + "/rds/hpc-work/Test_Model")
 
 # Flag for model.save
 print(datetime.now(), "Successfully saved trained model")
-print("Note that output snapshot array has dimensions (ny, nz, nx, 3")
+print("Note that output snapshot array has dimensions (ny, nz, nx, 3)")
