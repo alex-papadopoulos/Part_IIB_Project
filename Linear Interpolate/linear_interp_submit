@@ -1,0 +1,19 @@
+#!/bin/bash
+#SBATCH -J preprocess
+#SBATCH --account HOCHGREB-SL3-CPU
+#SBATCH --partition icelake
+#SBATCH -t 03:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=72
+#
+
+#SBATCH -e LINEAR_error.txt
+#SBATCH -o LINEAR_output.txt
+
+
+. /etc/profile.d/modules.sh                # Leave this line (enables the module command)
+module purge                               # Removes all modules still loaded
+module load rhel8/default-icl              # REQUIRED - loads the basic environment
+
+source ./tensorflow-env-python3/bin/activate
+python3 .linear_interp.py
